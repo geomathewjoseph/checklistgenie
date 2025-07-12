@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChecklistGenie - AI Checklist Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="max-w-xl mx-auto p-8 mt-12 bg-white rounded-2xl shadow-lg">
+    <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">ChecklistGenie</h1>
+    <p class="text-center mb-4 text-gray-600">Turn any goal into a personalized, AI-generated step-by-step checklist.</p>
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center space-x-4 text-sm text-gray-500">
+        <span>🎯 Students</span>
+        <span>📱 Creators</span>
+        <span>🚀 Entrepreneurs</span>
+      </div>
+    </div>
+    <input
+      id="goalInput"
+      type="text"
+      placeholder="e.g., Start a podcast, Prepare for coding interview, Launch a startup"
+      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-700"
+    />
+    <button
+      id="generateBtn"
+      onclick="generateChecklist()"
+      class="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-xl transition-colors"
+    >
+      Generate Checklist
+    </button>
+    <div id="loading" class="hidden mt-4 text-center">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <p class="mt-2 text-gray-600">Generating your checklist...</p>
+    </div>
+    <div id="checklistContainer" class="hidden mt-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Your Checklist</h2>
+        <div class="flex space-x-2">
+          <button onclick="exportChecklist()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm transition-colors">
+            📄 Export
+          </button>
+          <button onclick="saveChecklist()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-lg text-sm transition-colors">
+            💾 Save
+          </button>
+        </div>
+      </div>
+      <ul id="outputChecklist" class="space-y-2"></ul>
+      <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+        <p class="text-sm text-blue-700">
+          <strong>💡 Pro Tip:</strong> Click checkboxes to mark items as complete. Add due dates to stay on track!
+        </p>
+      </div>
+    </div>
+    <p id="error" class="text-red-500 mt-4 hidden">Something went wrong. Try again later.</p>
+
+    <!-- Saved Checklists Section -->
+    <div id="savedChecklistsSection" class="mt-8 hidden">
+      <h3 class="text-lg font-semibold text-gray-800 mb-3">📚 Saved Checklists</h3>
+      <div id="savedChecklists" class="space-y-2"></div>
+    </div>
+  </div>
+  <script>
+
+      try {
+const response = await fetch("/api/generate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({ goal })
+});
+
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+
+        // Parse the response into checklist items
+        const checklistItems = content.split('\n')
+          .filter(line => line.trim().startsWith('✓'))
+          .map(item => item.trim());
+
+        return checklistItems.length > 0 ? checklistItems : [
+          `✓ Research and understand what "${goal}" involves`,
+          '✓ Set specific, measurable objectives and deadlines',
+          '✓ Create a timeline with key milestones',
+          '✓ Identify required resources, tools, and budget',
+          '✓ Break down the goal into smaller, actionable tasks',
+          '✓ Create an action plan with clear priorities',
+          '✓ Start with the most important first step',
+          '✓ Track progress and adjust your plan as needed',
+          '✓ Seek advice from experts, mentors, or online communities',
+          '✓ Stay consistent and celebrate small wins along the way'
+        ];
+      } catch (error) {
+        console.error("Error calling OpenRouter API:", error);
+        throw error;
+      }
+    }
+
+    async function generateChecklist() {
+      const goal = document.getElementById("goalInput").value.trim();
+      const outputEl = document.getElementById("outputChecklist");
+      const errorEl = document.getElementById("error");
+      const loadingEl = document.getElementById("loading");
+      const checklistContainer = document.getElementById("checklistContainer");
+      const generateBtn = document.getElementById("generateBtn");
+
+      // Reset UI
+      errorEl.classList.add("hidden");
+      checklistContainer.classList.add("hidden");
+      outputEl.innerHTML = "";
+
+      if (!goal) {
+        alert("Please enter a goal.");
+        return;
+      }
+
+      // Show loading state
+      loadingEl.classList.remove("hidden");
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+
+      try {
+        const checklist = await generateAIChecklist(goal);
+
+        // Show checklist container
+        checklistContainer.classList.remove("hidden");
+
+        // Display checklist with enhanced styling
+        checklist.forEach((item, index) => {
+          const li = document.createElement("li");
+          li.className = "flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors";
+          li.innerHTML = `
+            <input type="checkbox" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+            <span class="flex-1 text-gray-700">${item}</span>
+          `;
+          outputEl.appendChild(li);
+
+          // Add slight delay for smooth appearance
+          setTimeout(() => {
+            li.style.opacity = '0';
+            li.style.transform = 'translateY(10px)';
+            li.style.transition = 'all 0.3s ease';
+            requestAnimationFrame(() => {
+              li.style.opacity = '1';
+              li.style.transform = 'translateY(0)';
+            });
+          }, index * 100);
+        });
+
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = "Failed to generate checklist. Please try again later.";
+        errorEl.classList.remove("hidden");
+      } finally {
+        // Reset loading state
+        loadingEl.classList.add("hidden");
+        generateBtn.disabled = false;
+        generateBtn.textContent = "Generate Checklist";
+      }
+    }
+
+    // Export functionality
+    function exportChecklist() {
+      const items = document.querySelectorAll('#outputChecklist li span');
+      let checklistText = "Your Checklist:\n\n";
+      items.forEach((item, index) => {
+        checklistText += `${index + 1}. ${item.textContent}\n`;
+      });
+
+      // Create downloadable text file
+      const blob = new Blob([checklistText], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'checklist.txt';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    // Save functionality (stores in localStorage)
+    function saveChecklist() {
+      const goal = document.getElementById("goalInput").value.trim();
+      const items = document.querySelectorAll('#outputChecklist li span');
+
+      if (items.length === 0) {
+        alert("No checklist to save!");
+        return;
+      }
+
+      const checklistData = {
+        goal: goal,
+        items: Array.from(items).map(item => item.textContent),
+        date: new Date().toLocaleDateString()
+      };
+
+      // Save to localStorage
+      let savedChecklists = JSON.parse(localStorage.getItem('checklists') || []);
+      savedChecklists.push(checklistData);
+      localStorage.setItem('checklists', JSON.stringify(savedChecklists));
+
+      alert(`Checklist for "${goal}" saved successfully!`);
+      showSavedChecklists();
+    }
+
+    // Show saved checklists
+    function showSavedChecklists() {
+      const savedChecklists = JSON.parse(localStorage.getItem('checklists')) || [];
+      const container = document.getElementById("savedChecklists");
+
+      if (savedChecklists.length > 0) {
+        document.getElementById("savedChecklistsSection").classList.remove("hidden");
+        container.innerHTML = '';
+
+        savedChecklists.forEach((checklist, index) => {
+          const div = document.createElement('div');
+          div.className = 'p-3 bg-gray-50 rounded-lg';
+          div.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-medium">${checklist.goal}</h4>
+                <p class="text-xs text-gray-500">Saved on ${checklist.date}</p>
+              </div>
+              <button onclick="loadSavedChecklist(${index})" class="text-blue-500 hover:text-blue-700 text-sm">
+                Load
+              </button>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+    }
+
+    // Load a saved checklist
+    function loadSavedChecklist(index) {
+      const savedChecklists = JSON.parse(localStorage.getItem('checklists')) || [];
+      if (index >= 0 && index < savedChecklists.length) {
+        const checklist = savedChecklists[index];
+        document.getElementById("goalInput").value = checklist.goal;
+
+        const outputEl = document.getElementById("outputChecklist");
+        outputEl.innerHTML = "";
+
+        checklist.items.forEach((item, i) => {
+          const li = document.createElement("li");
+          li.className = "flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors";
+          li.innerHTML = `
+            <input type="checkbox" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+            <span class="flex-1 text-gray-700">${item}</span>
+          `;
+          outputEl.appendChild(li);
+        });
+
+        document.getElementById("checklistContainer").classList.remove("hidden");
+      }
+    }
+
+    // Allow Enter key to trigger generation
+    document.getElementById("goalInput").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        generateChecklist();
+      }
+    });
+
+    // Show saved checklists on page load
+    document.addEventListener('DOMContentLoaded', showSavedChecklists);
+  </script>
+</body>
+</html>
