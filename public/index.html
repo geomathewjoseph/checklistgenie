@@ -62,9 +62,13 @@
     </div>
   </div>
   <script>
+    // OpenRouter API integration
+    async function generateAIChecklist(goal) {
+      const OPENROUTER_API_URL = "/api/generate";
+
 
       try {
-const response = await fetch("/api/generate", {
+        const response = await fetch(OPENROUTER_API_URL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
