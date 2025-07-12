@@ -6,18 +6,7 @@
 
 That’s how it started.
 
-I didn’t have a grand plan or some massive project idea — just a spark to do something slightly more productive with my weekend. I thought, *“Why not make a tool that helps people get things done us
-geomathewjoseph
-geomathewjoseph
-Update README.md
-8adb9c7
- · 
-Jul 12, 2025
-
-89 lines (51 loc) · 2.91 KB
-🧞‍♂️ ChecklistGenie — Your AI-Powered Goal Companion
-
-Deploy on Verceling AI?”*
+I didn’t have a grand plan or some massive project idea — just a spark to do something slightly more productive with my weekend. I thought, *“Why not make a tool that helps people get things done using AI?”*
 
 And thus, **ChecklistGenie** was born — a minimalist web app that transforms any goal you give it into a personalized, step-by-step checklist using AI ✨.
 
