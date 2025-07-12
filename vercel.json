@@ -2,8 +2,11 @@
   "routes": [
     {
       "src": "/api/generate",
-      "dest": "/api/generate.js"
+      "dest": "api/generate.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/index.html"
     }
   ]
 }
-
